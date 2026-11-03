@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>送り出し注意点データベース (No.1〜115)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Noto Sans JP"', 'Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f1f5f9;
+            color: #1e293b;
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+        .highlight {
+            background-color: #fef08a;
+            color: #854d0e;
+            padding: 0 2px;
+            border-radius: 2px;
+            font-weight: 700;
+        }
+        .glass-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            .list-card {
+                break-inside: avoid;
+                border: 1px solid #cbd5e1 !important;
+                box-shadow: none !important;
+                margin-bottom: 8px !important;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col pb-12">
+
+    <header class="sticky top-0 z-30 glass-header border-b border-slate-200 shadow-sm no-print">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center shadow-md font-bold">
+                    <i class="fa-solid fa-clipboard-list text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-base sm:text-lg font-bold text-slate-800 leading-tight">送り出し注意点 (全115名)</h1>
+                    <p class="text-xs text-slate-500">デイサービス・介護現場 申し送りメモ</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-1.5 sm:space-x-2">
+                <button onclick="openEditModal()" class="px-2.5 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-medium transition shadow-sm flex items-center gap-1">
+                    <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">新規追加</span>
+                </button>
+                <button onclick="exportToCSV()" title="CSV出力" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium transition flex items-center gap-1">
+                    <i class="fa-solid fa-file-csv text-emerald-600"></i> <span class="hidden sm:inline">CSV</span>
+                </button>
+                <button onclick="window.print()" title="印刷" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium transition flex items-center gap-1">
+                    <i class="fa-solid fa-print text-slate-600"></i> <span class="hidden sm:inline">印刷</span>
+                </button>
+                <button onclick="confirmResetData()" title="初期データに戻す" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg text-xs transition">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-3 sm:px-6 pt-4 flex-grow w-full">
+
+        <!-- Search & Filter Area -->
+        <div class="bg-white rounded-xl p-3.5 sm:p-4 shadow-sm border border-slate-200/80 mb-4 space-y-3 no-print">
+            <!-- Search bar -->
+            <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" id="search-input" oninput="handleSearch()" placeholder="No.、氏名、対応方法、備考から検索..." 
+                       class="w-full pl-10 pr-10 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition text-sm text-slate-800 placeholder-slate-400">
+                <button id="clear-search" onclick="clearSearch()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-circle-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Filter Controls -->
+            <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-slate-500 font-medium">受け入れ:</span>
+                    <select id="filter-family" onchange="render()" class="bg-slate-50 border border-slate-200 rounded-md px-2 py-1 focus:ring-1 focus:ring-brand-500">
+                        <option value="all">すべて</option>
+                        <option value="あり">あり</option>
+                        <option value="なし">なし</option>
+                        <option value="日によって">日によって</option>
+                    </select>
+
+                    <button id="btn-filter-remarks" onclick="toggleRemarksFilter()" class="px-2.5 py-1 rounded-md border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 flex items-center gap-1 transition">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-500"></i> 備考ありのみ
+                    </button>
+
+                    <button id="btn-filter-fav" onclick="toggleFavFilter()" class="px-2.5 py-1 rounded-md border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 flex items-center gap-1 transition">
+                        <i class="fa-solid fa-star text-slate-400" id="fav-icon"></i> お気に入り
+                    </button>
+                </div>
+
+                <div class="text-slate-500 font-medium ml-auto">
+                    表示: <span id="filtered-count" class="font-bold text-brand-700">0</span> / <span id="total-count">0</span> 件
+                </div>
+            </div>
+        </div>
+
+        <div id="list-container" class="space-y-3">
+            <!-- Dynamically populated vertical cards -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden py-16 text-center">
+            <div class="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
+                <i class="fa-solid fa-folder-open"></i>
+            </div>
+            <h3 class="text-base font-semibold text-slate-700">条件に該当するデータがありません</h3>
+            <p class="text-xs text-slate-500 mt-1">検索ワードやフィルター条件を変更してください。</p>
+        </div>
+
+    </main>
+
+    <!-- Edit Modal -->
+    <div id="edit-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 no-print">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
+            <div class="bg-slate-50 px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+                <h3 class="font-bold text-slate-800 text-base" id="edit-modal-title">データ編集</h3>
+                <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600 p-1 transition">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <form id="edit-form" onsubmit="saveRecord(event)" class="p-5 space-y-4 text-sm">
+                <input type="hidden" id="edit-id">
+
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="col-span-1">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">No. (番号)</label>
+                        <input type="number" id="edit-no" required min="1" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:bg-white text-slate-800">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">氏名 <span class="text-rose-500">*</span></label>
+                        <input type="text" id="edit-name" required placeholder="例: 山田 太郎 様" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:bg-white text-slate-800">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">ご家族受け入れ <span class="text-rose-500">*</span></label>
+                    <select id="edit-family" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:bg-white text-slate-800">
+                        <option value="あり">あり</option>
+                        <option value="なし">なし</option>
+                        <option value="日によって">日によって</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">送り出し対応方法 <span class="text-rose-500">*</span></label>
+                    <input type="text" id="edit-method" required placeholder="例: 玄関まで / ご家族へ受け渡すまで" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:bg-white text-slate-800">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">備考・注意事項</label>
+                    <textarea id="edit-remarks" rows="3" placeholder="特記事項（鍵所持、車いす移動、注意点等）" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:bg-white text-slate-800"></textarea>
+                </div>
+
+                <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                    <button type="button" id="btn-delete-record" onclick="deleteCurrentRecord()" class="text-xs text-rose-600 hover:text-rose-800 font-medium px-2 py-1 rounded hover:bg-rose-50 transition">
+                        <i class="fa-solid fa-trash-can mr-1"></i> 削除
+                    </button>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="closeEditModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium rounded-lg text-xs transition">
+                            キャンセル
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg text-xs transition shadow-sm">
+                            保存する
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 bg-slate-800 text-white text-xs px-4 py-3 rounded-xl shadow-lg flex items-center gap-2 transform translate-y-20 opacity-0 transition-all duration-300 no-print">
+        <i class="fa-solid fa-circle-check text-emerald-400 text-base" id="toast-icon"></i>
+        <span id="toast-message">処理が完了しました</span>
+    </div>
+
+    <script>
+        // Master Data (115 Records sequentially numbered 1 to 115)
+        const defaultData = [
+            { no: 1, name: "青木 脩一 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 2, name: "青葉 八重子 様", family: "なし", method: "玄関まで", remarks: "鍵を持っているか確認する" },
+            { no: 3, name: "浅野 弘子 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 4, name: "天下井 守 様", family: "あり", method: "縁側の出入口まで", remarks: "-" },
+            { no: 5, name: "荒井 幸江 様", family: "日によって", method: "部屋の中で室内用の車いすへ移乗するまで", remarks: "ご家族がいるときはご家族に受け渡すまで" },
+            { no: 6, name: "飯島 とし 様", family: "なし", method: "玄関まで", remarks: "鍵を持っているので開けてあげる" },
+            { no: 7, name: "飯塚 義子 様", family: "なし", method: "玄関まで", remarks: "連絡帳に鍵が入っているので開ける" },
+            { no: 8, name: "池田 充良 様", family: "日によって", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 9, name: "市川 よし江 様", family: "なし", method: "室内に入るまで", remarks: "連絡帳に鍵が入っているので開ける" },
+            { no: 10, name: "市村 滋子 様", family: "日によって", method: "ご家族へ受け渡すまで", remarks: "ご家族不在のときは玄関まで" },
+            { no: 11, name: "伊東 一枝 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 12, name: "稲葉 孝雄 様", family: "なし", method: "シニアカーへ乗るまで", remarks: "手引きでシニアカーまで誘導 荷物は玄関へ" },
+            { no: 13, name: "犬塚 由紀子 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 14, name: "猪瀬 三江子 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 15, name: "岩瀬 たか子 様", family: "日によって", method: "玄関まで", remarks: "時折ご家族受け入れあり" },
+            { no: 16, name: "岩浪 晴江 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 17, name: "上坂 喜代美 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 18, name: "植村 節子 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 19, name: "宇都野 栄 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 20, name: "宇津野 佐智子 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 21, name: "海老沢 京子 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 22, name: "遠藤 キヨ 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 23, name: "遠藤 まき子 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "ご家族不在のときは中に入ってリビングの椅子へ座っていただくまで" },
+            { no: 24, name: "大久保 静江 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "車を降りてから、玄関までこちらで介助する" },
+            { no: 25, name: "大久保 和子 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 26, name: "大越 和代 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 27, name: "大越 春枝 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 28, name: "大里 金次郎 様", family: "あり", method: "玄関まで", remarks: "-" },
+            { no: 29, name: "大嶋 衛子 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 30, name: "太田 トク 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 31, name: "落合 幸 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "時折息子様不在の時がある為、部屋内まで介助" },
+            { no: 32, name: "大津 美智子 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 33, name: "岡野 壽美子 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "スロープ使用" },
+            { no: 34, name: "小川 東吾 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 35, name: "小川 もと 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 36, name: "金丸 薫 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 37, name: "上方 孝一 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 38, name: "菊池 明子 様", family: "なし", method: "玄関まで", remarks: "鍵を開けたら入って右側のフックに鍵を引っかけておく" },
+            { no: 39, name: "菊池 正巳 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 40, name: "キム テヒ 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 41, name: "木村 てる子 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 42, name: "工藤 よしえ 様", family: "なし", method: "マンション1Fホールまで", remarks: "-" },
+            { no: 43, name: "久保田 一郎 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 44, name: "藏持 しず 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 45, name: "倉持 明子 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 46, name: "鴻巣 岩男 様", family: "なし", method: "玄関まで", remarks: "本人が鍵を持っている 玄関内の段差は車いす前輪を持ち上げて中に入れる" },
+            { no: 47, name: "小松原 いせ子 様", family: "なし", method: "未指定", remarks: "-" },
+            { no: 48, name: "五味田 ハツ 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 49, name: "小山 博文 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 50, name: "櫻井 和子 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 51, name: "佐藤 誠司 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 52, name: "佐藤 貞子 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 53, name: "澤邉 孝子 様", family: "なし", method: "玄関まで", remarks: "玄関内の椅子に座るまで見守り" },
+            { no: 54, name: "塩谷 美千代 様", family: "なし", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 55, name: "柴川 幸子 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 56, name: "柴崎 昭男 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 57, name: "島崎 茂夫 様", family: "あり", method: "玄関まで", remarks: "-" },
+            { no: 58, name: "清水 よし江 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 59, name: "杉山 文子 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 60, name: "鮏川 嗣 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 61, name: "鮏川 和子 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 62, name: "鈴木 光一 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 63, name: "鈴木 たけの 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 64, name: "鈴木 政子 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 65, name: "鈴木 善尋 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 66, name: "住谷 三枝子 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 67, name: "関 清 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 68, name: "関口 エツ 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 69, name: "高巣 文江 様", family: "あり", method: "玄関まで", remarks: "-" },
+            { no: 70, name: "高田 勇 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 71, name: "髙橋 京子 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 72, name: "高橋 烈子 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 73, name: "田上 正子 様", family: "なし", method: "玄関まで", remarks: "玄関外の門の鍵を閉める" },
+            { no: 74, name: "田上 ユキ子 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 75, name: "田渕 孝雄 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "時折ご家族不在の場合は玄関まで" },
+            { no: 76, name: "塚田 たか子 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 77, name: "鶴見 文明 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 78, name: "長井 進 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 79, name: "中泉 義隆 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 80, name: "中川 岩男 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 81, name: "中島 ゆき江 様", family: "日によって", method: "ご家族へ受け渡すまで", remarks: "不在の時は玄関内の段差をあがるまで見守り" },
+            { no: 82, name: "中村 静子 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 83, name: "奈良 朝子 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 84, name: "楢原 由美子 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 85, name: "西山 好 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 86, name: "根岸 貞子 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 87, name: "野口 博文 様", family: "なし", method: "自室まで", remarks: "季節に応じて、エアコン・暖房・電気をつける" },
+            { no: 88, name: "野口 美津子 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 89, name: "野村 英子 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "車いす昇降機を使い中に入り、ベッドへ移乗させるまで" },
+            { no: 90, name: "橋本 志づ江 様", family: "日によって", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 91, name: "長谷川 和美 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 92, name: "原 敏夫 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 93, name: "日辻 かつ子 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 94, name: "廣瀬 悦子 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 95, name: "廣瀬 幸子 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 96, name: "平山 裕人 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 97, name: "間中 きく江 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 98, name: "間中 ふみ江 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 99, name: "路川 秀一 様", family: "あり", method: "玄関まで", remarks: "時折ご家族受け入れあり" },
+            { no: 100, name: "宮島 利平 様", family: "あり", method: "玄関まで", remarks: "-" },
+            { no: 101, name: "村田 好子 様", family: "なし", method: "自室まで", remarks: "中に入りベッドへ移乗するまで 鍵を閉めたらポストへ" },
+            { no: 102, name: "森本 敏子 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 103, name: "門奈 和子 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 104, name: "柳町 和夫 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 105, name: "柳町 文子 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 106, name: "谷中 周子 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 107, name: "谷中 とく 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 108, name: "山口 英男 様", family: "あり", method: "玄関まで", remarks: "-" },
+            { no: 109, name: "山田 愛子 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 110, name: "山路 麗子 様", family: "なし", method: "玄関まで", remarks: "-" },
+            { no: 111, name: "横山 勝夫 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "妹のお店に送り届けてください" },
+            { no: 112, name: "吉江 昭一 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 113, name: "吉原 文男 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 114, name: "和久井 明 様", family: "あり", method: "ご家族へ受け渡すまで", remarks: "-" },
+            { no: 115, name: "渡辺 洋子 様", family: "なし", method: "玄関まで", remarks: "-" }
+        ];
+
+        // State Variables
+        let records = [];
+        let favorites = new Set();
+        let completed = new Set();
+        let favFilterActive = false;
+        let remarksFilterActive = false;
+        let activeEditNo = null;
+
+        window.onload = function() {
+            loadState();
+            render();
+        };
+
+        function loadState() {
+            const stored = localStorage.getItem('care_okuridashi_records_v2');
+            records = stored ? JSON.parse(stored) : JSON.parse(JSON.stringify(defaultData));
+
+            const storedFavs = localStorage.getItem('care_okuridashi_favs_v2');
+            favorites = storedFavs ? new Set(JSON.parse(storedFavs)) : new Set();
+
+            const storedComp = localStorage.getItem('care_okuridashi_comp_v2');
+            completed = storedComp ? new Set(JSON.parse(storedComp)) : new Set();
+        }
+
+        function saveState() {
+            localStorage.setItem('care_okuridashi_records_v2', JSON.stringify(records));
+            localStorage.setItem('care_okuridashi_favs_v2', JSON.stringify(Array.from(favorites)));
+            localStorage.setItem('care_okuridashi_comp_v2', JSON.stringify(Array.from(completed)));
+        }
+
+        function confirmResetData() {
+            if (confirm("全てのデータを初期の全115件の状態に戻しますか？")) {
+                records = JSON.parse(JSON.stringify(defaultData));
+                favorites.clear();
+                completed.clear();
+                saveState();
+                render();
+                showToast("全115件の初期データに復元しました");
+            }
+        }
+
+        function getFilteredRecords() {
+            const search = document.getElementById('search-input').value.trim().toLowerCase();
+            const familyFilter = document.getElementById('filter-family').value;
+
+            return records.filter(item => {
+                // Search term check
+                const matchSearch = !search || 
+                    String(item.no).includes(search) ||
+                    item.name.toLowerCase().includes(search) || 
+                    item.method.toLowerCase().includes(search) || 
+                    item.remarks.toLowerCase().includes(search);
+
+                // Family Filter
+                const matchFamily = familyFilter === 'all' || item.family === familyFilter;
+
+                // Fav Filter
+                const matchFav = !favFilterActive || favorites.has(item.no);
+
+                // Remarks filter
+                const matchRemarks = !remarksFilterActive || (item.remarks && item.remarks !== '-');
+
+                return matchSearch && matchFamily && matchFav && matchRemarks;
+            }).sort((a, b) => a.no - b.no); // Maintain No. order
+        }
+
+        function highlightText(text, searchStr) {
+            if (!searchStr || text === '-') return text;
+            const re = new RegExp(`(${searchStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            return text.replace(re, '<mark class="highlight">$1</mark>');
+        }
+
+        function render() {
+            const filtered = getFilteredRecords();
+            const searchStr = document.getElementById('search-input').value.trim();
+
+            document.getElementById('filtered-count').innerText = filtered.length;
+            document.getElementById('total-count').innerText = records.length;
+
+            const container = document.getElementById('list-container');
+            const emptyState = document.getElementById('empty-state');
+
+            if (filtered.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            container.innerHTML = filtered.map(item => {
+                const isFav = favorites.has(item.no);
+                const isDone = completed.has(item.no);
+                const hasNote = item.remarks && item.remarks !== '-';
+
+                return `
+                    <div class="list-card bg-white rounded-xl p-3.5 sm:p-4 shadow-sm border ${isDone ? 'border-slate-200 bg-slate-50/70 opacity-75' : 'border-slate-200/90'} hover:border-brand-300 transition relative group">
+                        
+                        <!-- Top Bar: No Badge, Name, Status Actions -->
+                        <div class="flex items-center justify-between gap-2 mb-2.5">
+                            <div class="flex items-center gap-2.5">
+                                <!-- No. Badge -->
+                                <span class="bg-brand-700 text-white font-bold text-xs px-2.5 py-1 rounded-md shadow-xs whitespace-nowrap">
+                                    No. ${highlightText(String(item.no), searchStr)}
+                                </span>
+                                
+                                <!-- Name -->
+                                <h2 class="font-bold text-slate-800 text-base sm:text-lg ${isDone ? 'line-through text-slate-400' : ''}">
+                                    ${highlightText(item.name, searchStr)}
+                                </h2>
+                            </div>
+
+                            <!-- Actions (Fav, Done Check, Edit) -->
+                            <div class="flex items-center gap-1 sm:gap-2 no-print">
+                                <button onclick="toggleDone(${item.no})" title="${isDone ? '未完了に戻す' : '完了チェック'}" 
+                                        class="p-1.5 rounded-lg border ${isDone ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'text-slate-300 border-slate-200 hover:text-slate-500'} transition text-sm">
+                                    <i class="fa-solid fa-circle-check"></i>
+                                </button>
+                                <button onclick="toggleFavorite(${item.no})" title="お気に入り" 
+                                        class="p-1.5 rounded-lg border ${isFav ? 'bg-amber-50 text-amber-500 border-amber-200' : 'text-slate-300 border-slate-200 hover:text-amber-400'} transition text-sm">
+                                    <i class="fa-solid fa-star"></i>
+                                </button>
+                                <button onclick="openEditModal(${item.no})" title="編集" class="p-1.5 text-slate-400 hover:text-brand-600 border border-slate-200 rounded-lg transition text-sm">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Content Grid: Family Acceptance & Method -->
+                        <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 text-xs sm:text-sm mb-2.5">
+                            <div class="sm:col-span-4 flex items-center gap-1.5">
+                                <span class="text-slate-400 text-xs font-medium whitespace-nowrap">受入:</span>
+                                ${getFamilyBadgeHtml(item.family)}
+                            </div>
+                            <div class="sm:col-span-8 flex items-center gap-1.5">
+                                <span class="text-slate-400 text-xs font-medium whitespace-nowrap">方法:</span>
+                                <span class="font-medium text-slate-800 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200/60 w-full sm:w-auto">
+                                    <i class="fa-solid fa-person-walking-arrow-right text-slate-400 mr-1 text-xs"></i>
+                                    ${highlightText(item.method, searchStr)}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Remarks Section -->
+                        <div class="text-xs p-2.5 rounded-lg border ${hasNote ? 'bg-amber-50/90 border-amber-200 text-amber-950 font-medium' : 'bg-slate-50/80 border-slate-100 text-slate-400'}">
+                            <div class="flex items-start gap-1.5">
+                                <i class="fa-solid ${hasNote ? 'fa-triangle-exclamation text-amber-500' : 'fa-comment text-slate-300'} text-xs mt-0.5"></i>
+                                <span class="leading-relaxed">
+                                    ${hasNote ? highlightText(item.remarks, searchStr) : '備考なし'}
+                                </span>
+                            </div>
+                        </div>
+
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getFamilyBadgeHtml(status) {
+            if (status === 'あり') {
+                return `<span class="inline-flex items-center gap-1 text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-md font-semibold"><i class="fa-solid fa-circle-check text-[10px]"></i> あり</span>`;
+            } else if (status === 'なし') {
+                return `<span class="inline-flex items-center gap-1 text-xs bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-md font-medium"><i class="fa-solid fa-circle-minus text-[10px] text-slate-400"></i> なし</span>`;
+            } else {
+                return `<span class="inline-flex items-center gap-1 text-xs bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-md font-medium"><i class="fa-solid fa-clock text-[10px]"></i> 日による</span>`;
+            }
+        }
+
+        function handleSearch() {
+            const input = document.getElementById('search-input');
+            const clearBtn = document.getElementById('clear-search');
+            if (input.value) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+            render();
+        }
+
+        function clearSearch() {
+            document.getElementById('search-input').value = '';
+            document.getElementById('clear-search').classList.add('hidden');
+            render();
+        }
+
+        function toggleFavorite(no) {
+            if (favorites.has(no)) {
+                favorites.delete(no);
+            } else {
+                favorites.add(no);
+            }
+            saveState();
+            render();
+        }
+
+        function toggleDone(no) {
+            if (completed.has(no)) {
+                completed.delete(no);
+            } else {
+                completed.add(no);
+            }
+            saveState();
+            render();
+        }
+
+        function toggleFavFilter() {
+            favFilterActive = !favFilterActive;
+            const btn = document.getElementById('btn-filter-fav');
+            const icon = document.getElementById('fav-icon');
+
+            if (favFilterActive) {
+                btn.className = "px-2.5 py-1 rounded-md border border-rose-200 bg-rose-50 text-rose-700 flex items-center gap-1 transition font-semibold";
+                icon.className = "fa-solid fa-star text-rose-500";
+            } else {
+                btn.className = "px-2.5 py-1 rounded-md border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 flex items-center gap-1 transition";
+                icon.className = "fa-solid fa-star text-slate-400";
+            }
+            render();
+        }
+
+        function toggleRemarksFilter() {
+            remarksFilterActive = !remarksFilterActive;
+            const btn = document.getElementById('btn-filter-remarks');
+
+            if (remarksFilterActive) {
+                btn.className = "px-2.5 py-1 rounded-md border border-amber-300 bg-amber-100 text-amber-800 flex items-center gap-1 transition font-bold";
+            } else {
+                btn.className = "px-2.5 py-1 rounded-md border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 flex items-center gap-1 transition";
+            }
+            render();
+        }
+
+        function openEditModal(no = null) {
+            activeEditNo = no;
+            const modal = document.getElementById('edit-modal');
+            const title = document.getElementById('edit-modal-title');
+            const deleteBtn = document.getElementById('btn-delete-record');
+
+            if (no !== null) {
+                const item = records.find(r => r.no === no);
+                if (!item) return;
+                title.innerText = `データ編集 (No.${no})`;
+                deleteBtn.classList.remove('hidden');
+                document.getElementById('edit-id').value = item.no;
+                document.getElementById('edit-no').value = item.no;
+                document.getElementById('edit-name').value = item.name;
+                document.getElementById('edit-family').value = item.family;
+                document.getElementById('edit-method').value = item.method;
+                document.getElementById('edit-remarks').value = item.remarks === '-' ? '' : item.remarks;
+            } else {
+                title.innerText = "新規データ追加";
+                deleteBtn.classList.add('hidden');
+                document.getElementById('edit-id').value = '';
+                document.getElementById('edit-form').reset();
+                // Suggest next No.
+                const maxNo = records.length > 0 ? Math.max(...records.map(r => r.no)) : 0;
+                document.getElementById('edit-no').value = maxNo + 1;
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-modal').classList.add('hidden');
+        }
+
+        function saveRecord(e) {
+            e.preventDefault();
+            const editId = document.getElementById('edit-id').value;
+            const targetNo = parseInt(document.getElementById('edit-no').value, 10);
+            const name = document.getElementById('edit-name').value.trim();
+            const family = document.getElementById('edit-family').value;
+            const method = document.getElementById('edit-method').value.trim();
+            let remarks = document.getElementById('edit-remarks').value.trim();
+            if (!remarks) remarks = '-';
+
+            if (editId !== '') {
+                // Edit
+                const oldNo = parseInt(editId, 10);
+                const idx = records.findIndex(r => r.no === oldNo);
+                if (idx !== -1) {
+                    records[idx] = { no: targetNo, name, family, method, remarks };
+                    showToast(`No.${targetNo} のデータを更新しました`);
+                }
+            } else {
+                // New
+                records.push({ no: targetNo, name, family, method, remarks });
+                showToast(`No.${targetNo} を新規追加しました`);
+            }
+
+            saveState();
+            closeEditModal();
+            render();
+        }
+
+        function deleteCurrentRecord() {
+            if (activeEditNo === null) return;
+            if (confirm(`No.${activeEditNo} のデータを削除しますか？`)) {
+                records = records.filter(r => r.no !== activeEditNo);
+                favorites.delete(activeEditNo);
+                completed.delete(activeEditNo);
+                saveState();
+                closeEditModal();
+                render();
+                showToast("データを削除しました");
+            }
+        }
+
+        function exportToCSV() {
+            const filtered = getFilteredRecords();
+            if (filtered.length === 0) {
+                showToast("出力対象のデータがありません");
+                return;
+            }
+
+            let csvContent = "\uFEFFNo,氏名,ご家族受け入れ,対応方法,備考・注意事項\n";
+            filtered.forEach(r => {
+                const cleanName = `"${r.name.replace(/"/g, '""')}"`;
+                const cleanFamily = `"${r.family.replace(/"/g, '""')}"`;
+                const cleanMethod = `"${r.method.replace(/"/g, '""')}"`;
+                const cleanRemarks = `"${r.remarks.replace(/"/g, '""')}"`;
+                csvContent += `${r.no},${cleanName},${cleanFamily},${cleanMethod},${cleanRemarks}\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `送り出し注意点_No1-115_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("CSVを出力しました");
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            toastMsg.innerText = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
